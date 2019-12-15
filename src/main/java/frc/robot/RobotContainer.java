@@ -42,7 +42,7 @@ public class RobotContainer {
         new JoystickButton(xbox, Button.kA.value).whenPressed(new InstantCommand(() -> { proximal.resetPosition(Math.toRadians(90.0)); }));
         new JoystickButton(xbox, Button.kB.value).whenPressed(new CharacterizationCommand(proximal));
         new JoystickButton(xbox, Button.kX.value).whenPressed(new RunCommand(() -> proximal.setPositionTarget(Math.toRadians(90)), proximal));
-        new JoystickButton(xbox, Button.kY.value).whenPressed(new RunCommand(() -> proximal.setPositionTarget(Math.toRadians(0)), proximal));
+        new JoystickButton(xbox, Button.kY.value).whenPressed(new RunCommand(() -> proximal.setPositionTarget(Math.toRadians(45)), proximal));
 
 
     }

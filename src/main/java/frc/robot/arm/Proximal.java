@@ -70,25 +70,25 @@ public class Proximal extends SubsystemBase {
 
     private double positionTarget;
     private boolean wantsPos = false;
-    private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0.554, 3.9, 0.118);
-    private PIDController controller = new PIDController(0.65 * 5.0, 0, 0.45);
-    private TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Math.toRadians(30), Math.toRadians(400));
+    private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0.1, 4.0, 0.118);
+    private PIDController controller = new PIDController(1.3, 0, 0.35);
+    private TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Math.toRadians(50), Math.toRadians(300));
 
     @Override
     public void periodic() {
         if(!wantsPos) return;
 
-        var angle = getPositionRadians();
+        // var angle = getPositionRadians();
 
-        // var currentState = new TrapezoidProfile.State(getPositionRadians(), getVelocityRadPerSec());
-        // var profile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(positionTarget, 0.0), currentState);
-        // var goal = profile.calculate(0.020);
-        var ff = feedforward.calculate(0.0, 0.0);
-        var fb = controller.calculate(angle, positionTarget);
-        var cos = Math.cos(angle) * 0.25;
+        var currentState = new TrapezoidProfile.State(getPositionRadians(), getVelocityRadPerSec());
+        var profile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(positionTarget, 0.0), currentState);
+        var goal = profile.calculate(0.040);
+        var ff = feedforward.calculate(goal.velocity, 0.0);
+        var fb = controller.calculate(currentState.position, goal.position);
+        var cos = Math.cos(currentState.position) * 0.25;
         var sum = fb + ff + cos;
 
-        System.out.println("sum " + sum + " cos: " + cos);
+        System.out.println("sum " + sum + "fb: " + fb + " cos: " + cos);
 
         master.configPeakOutputForward(0.2);
         master.configPeakOutputReverse(-0.2);
