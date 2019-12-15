@@ -2,7 +2,14 @@ package frc.robot.arm;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+
+import edu.wpi.first.wpilibj.controller.ArmFeedforward;
+import edu.wpi.first.wpilibj.controller.PIDController;
+import edu.wpi.first.wpilibj.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Proximal extends SubsystemBase {
@@ -12,17 +19,75 @@ public class Proximal extends SubsystemBase {
 
     public void setPower(double power) {
         master.set(ControlMode.PercentOutput, power);
+        wantsPos = false;
+    }
+
+    public TalonSRX getMaster() {
+        return master;
     }
 
     public Proximal() {
         master.configFactoryDefault();
         master.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
         master.setSensorPhase(true);
+        master.configVoltageCompSaturation(12.0);
+        master.enableVoltageCompensation(true);
 
         follower.configFactoryDefault();
         follower.follow(master);
+        follower.setInverted(InvertType.OpposeMaster);
 
         // Put PID stuff here
+    }
+
+    public double getPositionRadians() {
+        double currentPosition = master.getSelectedSensorPosition();
+        currentPosition /= 9.33;
+        currentPosition /= 4096.0;
+        currentPosition *= 2 * Math.PI;
+        return currentPosition;
+    }
+
+    public double getVelocityRadPerSec() {
+        var currentVelocity = master.getSelectedSensorVelocity() * 10.0;
+        currentVelocity /= 9.33;
+        currentVelocity /= 4096.0;
+        currentVelocity *= 2 * Math.PI;
+        return currentVelocity;
+    }
+
+    public void resetPosition(double positionRad) {
+        var position = positionRad / Math.PI / 2.0;
+        position *= 4096.0;
+        position *= 9.33;
+        master.setSelectedSensorPosition((int) position);
+    }
+
+    public void setPositionTarget(double positionTarget) {
+        this.positionTarget = positionTarget;
+        this.wantsPos = true;
+    }
+
+    private double positionTarget;
+    private boolean wantsPos = false;
+    private ArmFeedforward feedforward = new ArmFeedforward(0.3, 0.3, 3.9);
+    private PIDController controller = new PIDController(25, 0, 0.48);
+
+    @Override
+    public void periodic() {
+        if(!wantsPos) return;
+
+         var angle = getPositionRadians();
+
+        var ff = feedforward.calculate(angle, 0.0);
+        var fb = controller.calculate(angle, positionTarget);
+        var sum = fb + ff;
+
+        System.out.println("sum " + sum + "error: " + Math.toDegrees(controller.getPositionError()) + " fb: " + fb + " ff: " + ff);
+
+        master.configPeakOutputForward(1.0);
+        master.configPeakOutputReverse(-1.0);
+        master.set(ControlMode.PercentOutput, sum / 12.0);
     }
 
 }
