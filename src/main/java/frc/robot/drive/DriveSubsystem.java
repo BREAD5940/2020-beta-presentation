@@ -24,19 +24,19 @@ public class DriveSubsystem extends SubsystemBase {
 
     private SwerveDriveModule flModule = new SwerveDriveModule(
         2, 2, Rotation2d.fromDegrees(142 + 73), 1,
-            new PIDController(0.5, 0.0, 0.0)
+            new PIDController(0.5, 0.0, 0.0), "fl"
     );
     private SwerveDriveModule frModule = new SwerveDriveModule(
         4, 1, Rotation2d.fromDegrees(87), 3,
-            new PIDController(0.5, 0.0, 0.0)
+            new PIDController(0.5, 0.0, 0.0), "fr"
     );
     private SwerveDriveModule blModule = new SwerveDriveModule(
         8, 0, Rotation2d.fromDegrees(92 - 25 - 3), 7,
-            new PIDController(0.5, 0.0, 0.0)
+            new PIDController(0.5, 0.0, 0.0), "bl"
     );
     private SwerveDriveModule brModule = new SwerveDriveModule(
         6, 3, Rotation2d.fromDegrees(39), 5,
-            new PIDController(0.5, 0.0, 0.0)
+            new PIDController(0.5, 0.0, 0.0), "br"
     );
 
     public DriveSubsystem() {
@@ -45,20 +45,20 @@ public class DriveSubsystem extends SubsystemBase {
         blModule.driveMotor.setInverted(false);
         brModule.driveMotor.setInverted(true);
         modules.forEach(m -> m.driveMotor.setIdleMode(CANSparkMax.IdleMode.kBrake));
-        modules.forEach(m -> m.angleMotor.setIdleMode(CANSparkMax.IdleMode.kBrake));
+        modules.forEach(m -> m.angleMotor.setIdleMode(CANSparkMax.IdleMode.kCoast));
     }
 
     private double baseWidth = Units.inchesToMeters(24);
     private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(
-            new Translation2d(baseWidth / 2.0, baseWidth / 2.0),
-            new Translation2d(baseWidth / 2.0, -baseWidth / 2.0),
-            new Translation2d(-baseWidth / 2.0, -baseWidth / 2.0),
-            new Translation2d(-baseWidth / 2.0, baseWidth / 2.0)
+            new Translation2d(baseWidth / 2.0, baseWidth / 2.0), // fl
+            new Translation2d(baseWidth / 2.0, -baseWidth / 2.0), // fr
+            new Translation2d(-baseWidth / 2.0, -baseWidth / 2.0), // br
+            new Translation2d(-baseWidth / 2.0, baseWidth / 2.0) // bl
     );
 
     public SwerveDriveOdometry odometry = new SwerveDriveOdometry(kinematics, getGyro());
 
-    public List<SwerveDriveModule> modules = List.of(flModule, frModule, blModule, brModule);
+    public List<SwerveDriveModule> modules = List.of(flModule, frModule, brModule, blModule);
 
 
     @Override
@@ -71,6 +71,7 @@ public class DriveSubsystem extends SubsystemBase {
         SmartDashboard.putNumber("frAngle", frModule.getModuleHeading().getDegrees());
         SmartDashboard.putNumber("blAngle", blModule.getModuleHeading().getDegrees());
         SmartDashboard.putNumber("brAngle", brModule.getModuleHeading().getDegrees());
+        SmartDashboard.putString("pose", odometry.getPoseMeters().toString());
     }
 
     public void setSpeeds(ChassisSpeeds speeds) {

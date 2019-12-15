@@ -20,12 +20,12 @@ public class DriveCommand extends CommandBase {
 
     @Override
     public void execute() {
-        var forward = -xbox.getY(GenericHID.Hand.kRight);
-        var strafe = -xbox.getX(GenericHID.Hand.kRight);
-        var turn = -xbox.getX(GenericHID.Hand.kLeft);
-        if(Math.abs(forward) < 0.08) forward = 0.0;
-        if(Math.abs(strafe) < 0.08) strafe = 0.0;
-        if(Math.abs(turn) < 0.08) turn = 0.0;
+        var forward = -xbox.getY(GenericHID.Hand.kRight) * 0.5;
+        var strafe = -xbox.getX(GenericHID.Hand.kRight) * 0.5;
+        var turn = -xbox.getX(GenericHID.Hand.kLeft) * 0.6;
+//        if(Math.abs(forward) < 0.08) forward = 0.0;
+//        if(Math.abs(strafe) < 0.08) strafe = 0.0;
+//        if(Math.abs(turn) < 0.08) turn = 0.0;
 
         var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(forward, strafe, turn, drive.odometry.getPoseMeters().getRotation());
         drive.setSpeeds(speeds);

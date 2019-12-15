@@ -1,21 +1,20 @@
 package frc.robot.drive;
 
-import com.revrobotics.CANEncoder;
-import com.revrobotics.CANPIDController;
-import com.revrobotics.CANSparkMax;
+import com.revrobotics.*;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import com.revrobotics.ControlType;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.controller.PIDController;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Units;
 
 public class SwerveDriveModule {
 
     private final CANPIDController angleCANPIDController;
+    private final String name;
     public CANSparkMax angleMotor, driveMotor;
     private CANEncoder angleEncoder, driveEncoder;
     private AnalogInput angleInput;
@@ -28,20 +27,35 @@ public class SwerveDriveModule {
             int anglePort, int analogPort,
             Rotation2d offset,
             int drivePort,
-            PIDController angleController
+            PIDController angleController,
+            String name
     ) {
+        this.name = name;
+
         this.angleMotor = new CANSparkMax(anglePort, MotorType.kBrushless);
         this.driveMotor = new CANSparkMax(drivePort, MotorType.kBrushless);
         this.angleEncoder = angleMotor.getEncoder();
         this.driveEncoder = driveMotor.getEncoder();
         this.angleCANPIDController = angleMotor.getPIDController();
 
+
+        angleMotor.restoreFactoryDefaults();
+        driveMotor.restoreFactoryDefaults();
+
+        driveMotor.setSecondaryCurrentLimit(60.0);
+        driveMotor.setSmartCurrentLimit(40);
+        driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 500);
+        driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus2, 3);
+        angleMotor.setSecondaryCurrentLimit(60.0);
+        angleMotor.setSmartCurrentLimit(40);
+
         this.angleInput = new AnalogInput(analogPort);
         this.angleController = angleController;
         this.offset = offset;
 
+
         angleController.enableContinuousInput(-Math.PI, Math.PI);
-        angleCANPIDController.setOutputRange(-0.1, 0.1);
+        angleCANPIDController.setOutputRange(-0.5, 0.5);
     }
 
     Rotation2d getModuleHeading() {
@@ -65,6 +79,7 @@ public class SwerveDriveModule {
 
     void periodic() {
         var anglePower = angleController.calculate(getModuleHeading().getRadians());
+        if(Math.abs(anglePower) > 0.5) anglePower = 0.5 * Math.signum(anglePower);
         angleCANPIDController.setReference(anglePower, ControlType.kDutyCycle);
     }
 
@@ -75,5 +90,8 @@ public class SwerveDriveModule {
     public void setWantedState(SwerveModuleState state) {
         setTargetHeading(state.angle);
         setTargetDrivePower(state.speedMetersPerSecond);
+
+        SmartDashboard.putNumber(name + "TargetAngle", state.angle.getDegrees());
+        SmartDashboard.putNumber(name + "TargetPower", state.speedMetersPerSecond);
     }
 }
