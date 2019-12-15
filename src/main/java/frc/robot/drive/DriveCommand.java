@@ -27,7 +27,7 @@ public class DriveCommand extends CommandBase {
         if(Math.abs(strafe) < 0.08) strafe = 0.0;
         if(Math.abs(turn) < 0.08) turn = 0.0;
 
-        var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(forward, strafe, turn, drive.getGyro());
+        var speeds = ChassisSpeeds.fromFieldRelativeSpeeds(forward, strafe, turn, drive.odometry.getPoseMeters().getRotation());
         drive.setSpeeds(speeds);
 
     }

@@ -17,8 +17,8 @@ import java.util.List;
 
 public class DriveSubsystem extends SubsystemBase {
 
-    private AHRS gyro = new AHRS(SPI.Port.kMXP);
-    Rotation2d getGyro() {
+    public AHRS gyro = new AHRS(SPI.Port.kMXP);
+    public Rotation2d getGyro() {
         return new Rotation2d(-gyro.getFusedHeading());
     }
 
@@ -56,7 +56,7 @@ public class DriveSubsystem extends SubsystemBase {
             new Translation2d(-baseWidth / 2.0, baseWidth / 2.0)
     );
 
-    private SwerveDriveOdometry odometry = new SwerveDriveOdometry(kinematics, getGyro());
+    public SwerveDriveOdometry odometry = new SwerveDriveOdometry(kinematics, getGyro());
 
     public List<SwerveDriveModule> modules = List.of(flModule, frModule, blModule, brModule);
 

@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.wpilibj.geometry.Pose2d;
 import edu.wpi.first.wpilibj.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.kinematics.SwerveModuleState;
@@ -22,7 +23,7 @@ public class RobotContainer {
 
     private final Proximal proximal;
     private final Wrist wrist;
-    private final XboxController xbox;
+    private final XboxController xbox = new XboxController(0);
     private final DriveSubsystem drive;
 
     public RobotContainer() {
@@ -30,9 +31,8 @@ public class RobotContainer {
         this.wrist = new Wrist();
         this.drive = new DriveSubsystem();
 
-        this.xbox = new XboxController(0);
-
         drive.setDefaultCommand(new DriveCommand(drive, xbox));
+
 //        drive.setDefaultCommand(new RunCommand(() -> {
 //            drive.setSpeeds(new ChassisSpeeds(0.1, 0.0, 0.0));
 //        }, drive));
@@ -57,6 +57,8 @@ public class RobotContainer {
         new JoystickButton(xbox, Button.kB.value).whenPressed(new CharacterizationCommand(proximal));
         new JoystickButton(xbox, Button.kX.value).whenPressed(new RunCommand(() -> proximal.setPositionTarget(Math.toRadians(90)), proximal));
         new JoystickButton(xbox, Button.kY.value).whenPressed(new RunCommand(() -> proximal.setPositionTarget(Math.toRadians(45)), proximal));
+        new JoystickButton(xbox, Button.kStart.value).whenPressed(new InstantCommand(() -> drive.odometry.resetPosition(
+                new Pose2d(drive.odometry.getPoseMeters().getTranslation(), new Rotation2d()), drive.getGyro())));
 
 
     }
