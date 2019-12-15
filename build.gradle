@@ -62,6 +62,8 @@ dependencies {
     nativeZip wpi.deps.vendor.jni(wpi.platforms.roborio)
     nativeDesktopZip wpi.deps.vendor.jni(wpi.platforms.desktop)
 
+    compile "com.github.5190GreenHopeRobotics:FalconLibrary:d23c13ec24"
+
     testCompile 'junit:junit:4.12'
 }
 
