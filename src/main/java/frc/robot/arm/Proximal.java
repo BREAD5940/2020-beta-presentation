@@ -30,6 +30,8 @@ public class Proximal extends SubsystemBase {
         master.configFactoryDefault();
         master.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
         master.setSensorPhase(true);
+        master.configVoltageCompSaturation(12.0);
+        master.enableVoltageCompensation(true);
 
         follower.configFactoryDefault();
         follower.follow(master);
@@ -68,24 +70,29 @@ public class Proximal extends SubsystemBase {
 
     private double positionTarget;
     private boolean wantsPos = false;
-    private ArmFeedforward feedforward = new ArmFeedforward(0.554, 0.251, 3.9, 0.118);
-    private PIDController controller = new PIDController(2, 0, 0.36);
-    private TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Math.toRadians(10), Math.toRadians(1000));
+    private SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0.554, 3.9, 0.118);
+    private PIDController controller = new PIDController(0.65 * 5.0, 0, 0.45);
+    private TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Math.toRadians(30), Math.toRadians(400));
 
     @Override
     public void periodic() {
         if(!wantsPos) return;
 
-        var currentState = new TrapezoidProfile.State(getPositionRadians(), getVelocityRadPerSec());
-        var profile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(positionTarget, 0.0), currentState);
-        var goal = profile.calculate(0.020);
-        var ff = feedforward.calculate(currentState.position, goal.position, goal.velocity);
-        var fb = controller.calculate(currentState.position, goal.position);
-        var sum = fb;
+        var angle = getPositionRadians();
+
+        // var currentState = new TrapezoidProfile.State(getPositionRadians(), getVelocityRadPerSec());
+        // var profile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(positionTarget, 0.0), currentState);
+        // var goal = profile.calculate(0.020);
+        var ff = feedforward.calculate(0.0, 0.0);
+        var fb = controller.calculate(angle, positionTarget);
+        var cos = Math.cos(angle) * 0.25;
+        var sum = fb + ff + cos;
+
+        System.out.println("sum " + sum + " cos: " + cos);
 
         master.configPeakOutputForward(0.2);
         master.configPeakOutputReverse(-0.2);
-        master.set(ControlMode.PercentOutput, sum);
+        master.set(ControlMode.PercentOutput, sum / 12.0);
     }
 
 }
