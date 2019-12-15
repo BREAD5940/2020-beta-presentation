@@ -19,6 +19,7 @@ public class Proximal extends SubsystemBase {
 
     public void setPower(double power) {
         master.set(ControlMode.PercentOutput, power);
+        wantsPos = false;
     }
 
     public TalonSRX getMaster() {
@@ -62,20 +63,29 @@ public class Proximal extends SubsystemBase {
 
     public void setPositionTarget(double positionTarget) {
         this.positionTarget = positionTarget;
+        this.wantsPos = true;
     }
 
     private double positionTarget;
-    private ArmFeedforward feedforward = new ArmFeedforward(0, 0, 0, 0);
-    private PIDController controller = new PIDController(0, 0, 0);
-    private TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Math.toRadians(10), Math.toRadians(10));
+    private boolean wantsPos = false;
+    private ArmFeedforward feedforward = new ArmFeedforward(0.554, 0.251, 3.9, 0.118);
+    private PIDController controller = new PIDController(2, 0, 0.36);
+    private TrapezoidProfile.Constraints constraints = new TrapezoidProfile.Constraints(Math.toRadians(10), Math.toRadians(1000));
 
     @Override
     public void periodic() {
+        if(!wantsPos) return;
+
         var currentState = new TrapezoidProfile.State(getPositionRadians(), getVelocityRadPerSec());
         var profile = new TrapezoidProfile(constraints, new TrapezoidProfile.State(positionTarget, 0.0), currentState);
         var goal = profile.calculate(0.020);
         var ff = feedforward.calculate(currentState.position, goal.position, goal.velocity);
         var fb = controller.calculate(currentState.position, goal.position);
+        var sum = fb;
+
+        master.configPeakOutputForward(0.2);
+        master.configPeakOutputReverse(-0.2);
+        master.set(ControlMode.PercentOutput, sum);
     }
 
 }

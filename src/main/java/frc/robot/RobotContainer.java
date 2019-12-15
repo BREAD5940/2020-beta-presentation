@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.arm.CharacterizationCommand;
 import frc.robot.arm.Proximal;
 import frc.robot.arm.Wrist;
 
@@ -39,6 +40,10 @@ public class RobotContainer {
         }, proximal));
 
         new JoystickButton(xbox, Button.kA.value).whenPressed(new InstantCommand(() -> { proximal.resetPosition(Math.toRadians(90.0)); }));
+        new JoystickButton(xbox, Button.kB.value).whenPressed(new CharacterizationCommand(proximal));
+        new JoystickButton(xbox, Button.kX.value).whenPressed(new RunCommand(() -> proximal.setPositionTarget(Math.toRadians(90)), proximal));
+
+
     }
 
 }
